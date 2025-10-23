@@ -1,61 +1,233 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Guia de Autenticação e Controle de Acesso - Laravel Sanctum
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Funcionalidades Implementadas
 
-## About Laravel
+1ª **Laravel Sanctum** para autenticação via tokens
+2ª **Sistema de Permissões** com controle de acesso via Gates
+3ª **Enums** para UserType e UserStatus
+4ª **Modelo User** atualizado com todos os campos necessários
+5ª **Modelo Permission** com estrutura action/resource/name
+6ª **Controllers** para autenticação e gestão de permissões
+7ª **Migrations** e **Seeders** configurados
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Estrutura do Banco de Dados
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Tabela Users
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+-   `id`, `cpf`, `email`, `full_name`, `type`, `status`
+-   `phone`, `birth_date`, `zip_code`, `address`, `address_number`
+-   `complement`, `neighborhood`, `city`, `state`, `last_access_at`
 
-## Learning Laravel
+### Tabela Permissions
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+-   `id`, `action`, `resource`, `name`, `created_at`, `updated_at`
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Tabela User_Permissions (pivot)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+-   `user_id`, `permission_id`
 
-## Laravel Sponsors
+## Usuário de Teste
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**Email:** `admin@example.com`
+**Senha:** `password`
+**CPF:** `12345678901`
+**Tipo:** `ADMIN`
+**Status:** `ACTIVE`
 
-### Premium Partners
+Este usuário já possui **todas as permissões** atribuídas.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Endpoints da API
 
-## Contributing
+### Autenticação
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+#### 1. Login
 
-## Code of Conduct
+```bash
+POST /api/auth/login
+Content-Type: application/json
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+{
+    "email": "admin@example.com",
+    "password": "password",
+    "device_name": "web_browser"
+}
+```
 
-## Security Vulnerabilities
+#### 2. Logout
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+POST /api/auth/logout
+Authorization: Bearer {seu_token}
+```
 
-## License
+#### 3. Dados do Usuário
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+GET /api/auth/me
+Authorization: Bearer {seu_token}
+```
+
+#### 4. Atualizar Perfil
+
+```bash
+PUT /api/auth/profile
+Authorization: Bearer {seu_token}
+Content-Type: application/json
+
+{
+    "full_name": "Novo Nome",
+    "phone": "(11) 99999-9999"
+}
+```
+
+### Permissões
+
+#### 1. Listar Permissões
+
+```bash
+GET /api/permissions
+Authorization: Bearer {seu_token}
+```
+
+#### 2. Criar Permissão
+
+```bash
+POST /api/permissions
+Authorization: Bearer {seu_token}
+Content-Type: application/json
+
+{
+    "action": "view",
+    "resource": "reports",
+    "name": "Visualizar Relatórios"
+}
+```
+
+#### 3. Atribuir Permissão a Usuário
+
+```bash
+POST /api/permissions/{permission_id}/assign
+Authorization: Bearer {seu_token}
+Content-Type: application/json
+
+{
+    "user_id": 1
+}
+```
+
+## Teste das Gates
+
+#### Endpoint de Teste
+
+```bash
+GET /api/test-gate
+Authorization: Bearer {seu_token}
+```
+
+Este endpoint testa a autorização via Gate para `Gate::authorize('list', 'activity_log')`.
+
+## Como Testar
+
+### 1. Iniciar o Servidor
+
+```bash
+php artisan serve
+```
+
+### 2. Fazer Login
+
+Use o endpoint de login para obter um token de acesso.
+
+### 3. Testar Permissões
+
+Use o token obtido para acessar os endpoints protegidos.
+
+### 4. Verificar Gates
+
+Acesse o endpoint `/api/test-gate` para verificar se as Gates estão funcionando.
+
+## Comandos Artisan Úteis
+
+### Atribuir Permissões a um Usuário
+
+```bash
+php artisan user:assign-permissions {email}
+```
+
+### Recriar o Banco com Dados de Teste
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+## Estrutura de Permissões Criadas
+
+O sistema já vem com as seguintes permissões:
+
+### Activity Log
+
+-   `list` - Listar Logs de Atividade
+-   `create` - Criar Log de Atividade
+-   `update` - Atualizar Log de Atividade
+-   `delete` - Deletar Log de Atividade
+
+### User
+
+-   `list` - Listar Usuários
+-   `create` - Criar Usuário
+-   `update` - Atualizar Usuário
+-   `delete` - Deletar Usuário
+
+### Permission
+
+-   `list` - Listar Permissões
+-   `create` - Criar Permissão
+-   `update` - Atualizar Permissão
+-   `delete` - Deletar Permissão
+
+## Verificação via Gates
+
+Para verificar permissões em seus controllers, use:
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+// Exemplo: verificar se pode listar activity_log
+Gate::authorize('list', 'activity_log');
+
+// Exemplo: verificar se pode criar usuário
+Gate::authorize('create', 'user');
+```
+
+## Configuração das Gates no AppServiceProvider
+
+As Gates já estão configuradas no `AppServiceProvider::boot()`:
+
+```php
+Gate::define('list', fn(User $user, string $permission) => $user->hasPermission($permission, 'list'));
+Gate::define('update', fn(User $user, string $permission) => $user->hasPermission($permission, 'update'));
+Gate::define('delete', fn(User $user, string $permission) => $user->hasPermission($permission, 'delete'));
+Gate::define('create', fn(User $user, string $permission) => $user->hasPermission($permission, 'create'));
+```
+
+## Enums Disponíveis
+
+### UserType
+
+-   `PRE_REGISTRATION` - Pré-cadastro
+-   `MEMBER` - Membro
+-   `MASTER` - Master
+-   `ADMIN` - Administrador
+
+### UserStatus
+
+-   `ACTIVE` - Ativo
+-   `SUSPENDED` - Suspenso
+-   `EXCLUDED` - Excluído
+-   `PENDING` - Pendente
+
+---
+
+## 🎉 Sistema Pronto para Uso!
+
+Agora você tem um sistema completo de autenticação com Laravel Sanctum e controle de acesso granular via permissões e Gates.
