@@ -227,7 +227,3 @@ Gate::define('create', fn(User $user, string $permission) => $user->hasPermissio
 -   `PENDING` - Pendente
 
 ---
-
-## 🎉 Sistema Pronto para Uso!
-
-Agora você tem um sistema completo de autenticação com Laravel Sanctum e controle de acesso granular via permissões e Gates.
